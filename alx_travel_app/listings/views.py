@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Listing, Booking, Payment, Review
 from .serializers import ListingSerializer, BookingSerializer, PaymentSerializer, ReviewSerializer
+from .tasks import send_booking_confirmation_email
 
 
 class ListingViewSet(viewsets.ModelViewSet):
@@ -21,6 +22,10 @@ class ReviewViewset(viewsets.ModelViewSet):
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
+
+    def perform_create(self, serializer):
+        booking = serializer.save()
+        send_booking_confirmation_email.delay(booking.id)
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
